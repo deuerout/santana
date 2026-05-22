@@ -1,5 +1,9 @@
+import os
+from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import SerperDevTool
+
+load_dotenv()
 
 
 class MarketAnalysisTool(SerperDevTool):
@@ -52,6 +56,11 @@ def build_market_research_crew() -> Crew:
 
 
 if __name__ == "__main__":
+    required_keys = ["OPENAI_API_KEY", "SERPER_API_KEY"]
+    missing = [k for k in required_keys if not os.getenv(k)]
+    if missing:
+        raise EnvironmentError(f"Missing required environment variables: {', '.join(missing)}")
+
     crew = build_market_research_crew()
     result = crew.kickoff(inputs={"market_segment": "Sustainable Technologies"})
     print("\n=== RESEARCH REPORT ===\n")
