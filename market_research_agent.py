@@ -1,9 +1,19 @@
+import argparse
 import os
+import sys
+
 from dotenv import load_dotenv
-from crewai import Agent, Task, Crew, Process
-from crewai_tools import SerperDevTool
 
 load_dotenv()
+
+from crewai import Agent, Crew, Process, Task, LLM
+from crewai_tools import SerperDevTool
+
+
+claude_llm = LLM(
+    model="anthropic/claude-sonnet-4-6",
+    api_key=os.getenv("ANTHROPIC_API_KEY"),
+)
 
 
 class MarketAnalysisTool(SerperDevTool):
@@ -29,6 +39,7 @@ def build_market_research_crew() -> Crew:
             "that help shape strategic decisions."
         ),
         tools=[tool],
+        llm=claude_llm,
     )
 
     trend_analysis_task = Task(
@@ -55,13 +66,26 @@ def build_market_research_crew() -> Crew:
     )
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the market research agent.")
+    parser.add_argument(
+        "market_segment",
+        nargs="?",
+        default="Sustainable Technologies",
+        help="Market segment to research (default: 'Sustainable Technologies')",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    required_keys = ["OPENAI_API_KEY", "SERPER_API_KEY"]
+    required_keys = ["ANTHROPIC_API_KEY", "SERPER_API_KEY"]
     missing = [k for k in required_keys if not os.getenv(k)]
     if missing:
-        raise EnvironmentError(f"Missing required environment variables: {', '.join(missing)}")
+        print(f"Error: Missing environment variables: {', '.join(missing)}", file=sys.stderr)
+        sys.exit(1)
 
+    args = parse_args()
     crew = build_market_research_crew()
-    result = crew.kickoff(inputs={"market_segment": "Sustainable Technologies"})
+    result = crew.kickoff(inputs={"market_segment": args.market_segment})
     print("\n=== RESEARCH REPORT ===\n")
     print(result)
