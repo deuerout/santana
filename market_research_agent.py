@@ -67,9 +67,37 @@ def build_market_research_crew() -> Crew:
         agent=market_researcher,
     )
 
+    report_writer = Agent(
+        role="Report Writer",
+        goal="Turn raw market research into a polished, client-ready report",
+        verbose=True,
+        memory=True,
+        backstory=(
+            "A former strategy consultant turned writer, you take dense analyst "
+            "findings and reshape them into a report an executive can read in "
+            "five minutes and act on immediately."
+        ),
+    )
+
+    report_writing_task = Task(
+        description=(
+            "Using the market researcher's findings on the '{market_segment}' "
+            "segment, write a polished, client-ready report in Markdown. "
+            "Do not invent new facts; synthesize and clarify what the "
+            "researcher found."
+        ),
+        expected_output=(
+            "A Markdown report with: a one-paragraph executive summary, "
+            "a 'Key Trends' section, a 'Customer Preferences' section, a "
+            "'Growth Opportunities' section, and a 'Recommendations' section."
+        ),
+        agent=report_writer,
+        context=[trend_analysis_task],
+    )
+
     return Crew(
-        agents=[market_researcher],
-        tasks=[trend_analysis_task],
+        agents=[market_researcher, report_writer],
+        tasks=[trend_analysis_task, report_writing_task],
         process=Process.sequential,
         verbose=True,
     )
